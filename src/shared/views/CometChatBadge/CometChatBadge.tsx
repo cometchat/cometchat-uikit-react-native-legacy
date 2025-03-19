@@ -23,18 +23,13 @@ interface CometChatBadgeProps {
 export const CometChatBadge = ({ count = 0, style = new BadgeStyle({}) }: CometChatBadgeProps) => {
   const { theme } = useContext<CometChatContextType>(CometChatContext);
 
-  const defaultStyleProps = new BadgeStyle({
+  const style = new BadgeStyle({
     backgroundColor: theme?.palette.getPrimary(),
     textFont: theme.typography.caption2,
     textColor: theme.palette.getBackgroundColor(),
+    ...propsStyle
   });
-  const { count } = props;
-  const style = {
-    ...defaultStyleProps,
-    ...props.style,
-    border: { ...defaultStyleProps.border, ...props.style?.border },
-    textFont: { ...defaultStyleProps.textFont, ...props.style?.textFont },
-  };
+
   if (count == 0) return null;
   return (
     <View
@@ -56,7 +51,7 @@ export const CometChatBadge = ({ count = 0, style = new BadgeStyle({}) }: CometC
             color: style.textColor,
           },
           style.textFont,
-        ] as TextStyle}
+        ] as TextStyle[]}
       >
         {count > 999 ? '999+' : count}
       </Text>

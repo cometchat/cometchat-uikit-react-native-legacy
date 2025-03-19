@@ -9,7 +9,13 @@ import {
   ViewProps,
   //@ts-ignore
 } from 'react-native';
-import React, { useEffect, useState, useRef, useContext } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useContext,
+  useCallback,
+} from 'react';
 import { AvatarStyle, CometChatContext, CometChatListItem } from '../shared';
 import { localize } from '../shared';
 import { ICONS } from './resources';
@@ -176,7 +182,6 @@ export interface CometChatMessageHeaderInterface {
   tailViewContainerStyle?: StyleProp<ViewStyle>;
 }
 
-
 export const CometChatMessageHeader = (
   props: CometChatMessageHeaderInterface
 ) => {
@@ -192,9 +197,6 @@ export const CometChatMessageHeader = (
     protectedGroupIcon,
     privateGroupIcon,
     AppBarOptions,
-    style,
-    user,
-    group,
     backButtonIcon,
     hideBackIcon,
     ListItemView,
@@ -205,25 +207,31 @@ export const CometChatMessageHeader = (
     headViewContainerStyle,
     bodyViewContainerStyle,
     tailViewContainerStyle,
+
+    user = null,
+    group = null,
+    style = {},
   } = props;
 
   const _avatarStyle = new AvatarStyle({
     backgroundColor: theme?.palette?.getAccent600(),
     nameTextColor: theme?.palette?.getAccent(),
     nameTextFont: theme?.typography.body,
-    ...props?.avatarStyle
+    ...avatarStyle,
   });
 
   const [groupObj, setGroupObj] = useState(group);
-  const [userStatus, setUserStatus] = useState((user && user.getStatus) ? user.getStatus() : '');
+  const [userStatus, setUserStatus] = useState(
+    user && user.getStatus ? user.getStatus() : ''
+  );
   const [typingText, setTypingText] = useState('');
 
   const receiverTypeRef = useRef(
     user
       ? CometChat.RECEIVER_TYPE.USER
       : group
-        ? CometChat.RECEIVER_TYPE.GROUP
-        : null
+      ? CometChat.RECEIVER_TYPE.GROUP
+      : null
   );
 
   useEffect(() => {
@@ -243,8 +251,8 @@ export const CometChatMessageHeader = (
               ? { uri: backButtonIcon }
               : typeof backButtonIcon == 'object' ||
                 typeof backButtonIcon == 'number'
-                ? backButtonIcon
-                : ICONS.BACK
+              ? backButtonIcon
+              : ICONS.BACK
           }
           style={[
             styles.backButtonIconStyle,
@@ -259,13 +267,16 @@ export const CometChatMessageHeader = (
     if (!disableTyping && typingText !== '')
       return (
         <Text
-          style={[
-            {
-              color:
-                style?.typingIndicatorTextColor ?? theme.palette.getAccent600(),
-            },
-            style?.typingIndicatorTextFont ?? theme.typography.text1,
-          ] as TextStyle}
+          style={
+            [
+              {
+                color:
+                  style?.typingIndicatorTextColor ??
+                  theme.palette.getAccent600(),
+              },
+              style?.typingIndicatorTextFont ?? theme.typography.text1,
+            ] as TextStyle[]
+          }
         >
           {typingText}
         </Text>
@@ -273,19 +284,21 @@ export const CometChatMessageHeader = (
     if (disableUsersPresence) return null;
     return (
       <Text
-        style={[
-          { color: style?.subtitleTextColor ?? theme.palette.getAccent600() },
-          style?.subtitleTextFont ?? theme.typography.text1,
-        ] as TextStyle}
+        style={
+          [
+            { color: style?.subtitleTextColor ?? theme.palette.getAccent600() },
+            style?.subtitleTextFont ?? theme.typography.text1,
+          ] as TextStyle[]
+        }
       >
         {receiverTypeRef.current === CometChat.RECEIVER_TYPE.GROUP &&
-          (groupObj?.['membersCount'] || groupObj?.['membersCount'] === 0)
+        (groupObj?.['membersCount'] || groupObj?.['membersCount'] === 0)
           ? `${groupObj['membersCount']} ${localize('MEMBERS')}`
           : receiverTypeRef.current === CometChat.RECEIVER_TYPE.USER
-            ? userStatus === UserStatusConstants.online
-              ? localize('ONLINE')
-              : localize('OFFLINE')
-            : ''}
+          ? userStatus === UserStatusConstants.online
+            ? localize('ONLINE')
+            : localize('OFFLINE')
+          : ''}
       </Text>
     );
   };
@@ -315,7 +328,10 @@ export const CometChatMessageHeader = (
   };
 
   const handleGroupListener = (groupDetails: any) => {
-    if (groupDetails?.guid === groupObj?.getGuid() && groupDetails.membersCount) {
+    if (
+      groupDetails?.guid === groupObj?.getGuid() &&
+      groupDetails.membersCount
+    ) {
       setGroupObj(groupDetails);
     }
   };
@@ -390,19 +406,32 @@ export const CometChatMessageHeader = (
     };
   }, []);
 
+  const AppBarOptionsView = useCallback(() => {
+    if (AppBarOptions) {
+      return (
+        <AppBarOptions
+          {...(user ? { user } : groupObj ? { group: groupObj } : {})}
+        />
+      );
+    }
+    return null;
+  }, [user?.getUid(), groupObj?.getGuid()]);
+
   return (
     <View
-      style={[
-        { flexDirection: 'row' },
-        {
-          width: style?.width ?? 'auto',
-          height: style?.height ?? 'auto',
-          backgroundColor:
-            style?.backgroundColor ?? theme.palette.getBackgroundColor(),
-          borderRadius: style?.borderRadius ?? 0,
-        },
-        style?.border ?? {},
-      ] as ViewProps}
+      style={
+        [
+          { flexDirection: 'row' },
+          {
+            width: style?.width ?? 'auto',
+            height: style?.height ?? 'auto',
+            backgroundColor:
+              style?.backgroundColor ?? theme.palette.getBackgroundColor(),
+            borderRadius: style?.borderRadius ?? 0,
+          },
+          style?.border ?? {},
+        ] as ViewProps
+      }
     >
       {!hideBackIcon && <BackButton />}
       <View style={{ flex: 1 }}>
@@ -412,19 +441,31 @@ export const CometChatMessageHeader = (
           <CometChatListItem
             id={user ? user.getUid() : groupObj ? groupObj.getGuid() : ''}
             title={user ? user.getName() : groupObj ? groupObj.getName() : ''}
-            avatarName={user ? user.getName() : groupObj ? groupObj.getName() : ''}
-            avatarURL={user ? user.getAvatar() ? { uri: user.getAvatar() } : undefined : groupObj ? groupObj.getIcon() ? { uri: groupObj.getIcon() } : undefined : undefined}
+            avatarName={
+              user ? user.getName() : groupObj ? groupObj.getName() : ''
+            }
+            avatarURL={
+              user
+                ? user.getAvatar()
+                  ? { uri: user.getAvatar() }
+                  : undefined
+                : groupObj
+                ? groupObj.getIcon()
+                  ? { uri: groupObj.getIcon() }
+                  : undefined
+                : undefined
+            }
             SubtitleView={
               SubtitleView
                 ? () => (
-                  <SubtitleView
-                    {...(user
-                      ? { user }
-                      : groupObj
+                    <SubtitleView
+                      {...(user
+                        ? { user }
+                        : groupObj
                         ? { group: groupObj }
                         : {})}
-                  />
-                )
+                    />
+                  )
                 : SubtitleViewFnc
             }
             bodyViewContainerStyle={{
@@ -440,23 +481,23 @@ export const CometChatMessageHeader = (
               disableUsersPresence
                 ? 'transparent'
                 : user && userStatus === UserStatusConstants.online
-                  ? style?.onlineStatusColor || theme.palette.getSuccess()
-                  : 'transparent'
+                ? style?.onlineStatusColor || theme.palette.getSuccess()
+                : 'transparent'
             }
             statusIndicatorStyle={
               (groupObj
                 ? {
-                  height: 15,
-                  width: 15,
-                  backgroundColor:
-                    groupObj.getType() === CometChat.GROUP_TYPE.PASSWORD
-                      ? PASSWORD_GROUP_COLOR // Note: Need to add this in palette
-                      : groupObj.getType() === CometChat.GROUP_TYPE.PRIVATE
+                    height: 15,
+                    width: 15,
+                    backgroundColor:
+                      groupObj.getType() === CometChat.GROUP_TYPE.PASSWORD
+                        ? PASSWORD_GROUP_COLOR // Note: Need to add this in palette
+                        : groupObj.getType() === CometChat.GROUP_TYPE.PRIVATE
                         ? PRIVATE_GROUP_COLOR // Note: Need to add this in palette
                         : '',
-                  borderRadius: 15,
-                  ...statusIndicatorStyle,
-                }
+                    borderRadius: 15,
+                    ...statusIndicatorStyle,
+                  }
                 : { ...statusIndicatorStyle }) as ViewProps
             }
             statusIndicatorIcon={
@@ -466,27 +507,15 @@ export const CometChatMessageHeader = (
                     ? protectedGroupIcon
                     : ICONS.PROTECTED
                   : groupObj.getType() === CometChat.GROUP_TYPE.PRIVATE
+                  ? privateGroupIcon
                     ? privateGroupIcon
                       ? privateGroupIcon
-                        ? privateGroupIcon
-                        : ICONS.PRIVATE
-                      : null
+                      : ICONS.PRIVATE
                     : null
+                  : null
                 : null
             }
-            TailView={
-              AppBarOptions
-                ? () => (
-                  <AppBarOptions
-                    {...(user
-                      ? { user }
-                      : groupObj
-                        ? { group: groupObj }
-                        : {})}
-                  />
-                )
-                : null
-            }
+            TailView={AppBarOptionsView}
             headViewContainerStyle={headViewContainerStyle}
             tailViewContainerStyle={tailViewContainerStyle}
             avatarStyle={_avatarStyle}
@@ -495,10 +524,4 @@ export const CometChatMessageHeader = (
       </View>
     </View>
   );
-};
-
-CometChatMessageHeader.defaultProps = {
-  user: null,
-  group: null,
-  style: {},
 };
