@@ -16,15 +16,11 @@ import styles from './styles';
  *
  */
 interface CometChatBadgeProps {
-  count: number;
+  count?: number;
   style?: BadgeStyle;
 }
 
-export const CometChatBadge = (props: CometChatBadgeProps) => {
-  const {
-    count= 0,
-    style: propsStyle= new BadgeStyle({}),
-  } = props;
+export const CometChatBadge = ({ count = 0, style = new BadgeStyle({}) }: CometChatBadgeProps) => {
   const { theme } = useContext<CometChatContextType>(CometChatContext);
 
   const style = new BadgeStyle({
